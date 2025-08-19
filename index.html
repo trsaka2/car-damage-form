@@ -381,9 +381,9 @@
                 try {
                     const response = await fetch('https://us-central1-asset-tracker-ca6ff.cloudfunctions.net/addCarData', {
                         method: 'POST',
+                        mode: 'cors',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json'
                         },
                         body: JSON.stringify(data)
                     });
