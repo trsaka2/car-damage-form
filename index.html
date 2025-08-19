@@ -379,29 +379,44 @@
                 };
                 
                 try {
-                    // Firebase Realtime Database'e direkt yazma (CORS yok)
-                    const firebaseUrl = 'https://asset-tracker-ca6ff-default-rtdb.firebaseio.com/car-requests.json';
+                    setLoadingState(true);
                     
-                    const response = await fetch(firebaseUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(data)
+                    // JSONP callback
+                    window.carFormCallback = function(result) {
+                        setLoadingState(false);
+                        
+                        if (result.success) {
+                            showSuccess();
+                            form.reset();
+                        } else {
+                            showError(result.error || 'Bir hata oluştu');
+                        }
+                        
+                        // Cleanup
+                        delete window.carFormCallback;
+                        const script = document.getElementById('jsonp-script');
+                        if (script) script.remove();
+                    };
+                    
+                    // JSONP request to Firebase Functions
+                    const script = document.createElement('script');
+                    script.id = 'jsonp-script';
+                    const params = new URLSearchParams({
+                        plate: plateValue,
+                        email: emailValue,
+                        callback: 'carFormCallback'
                     });
                     
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    script.src = `https://us-central1-asset-tracker-ca6ff.cloudfunctions.net/addCarData?${params}`;
+                    script.onerror = function() {
+                        setLoadingState(false);
+                        showError('Firebase Functions bağlantı hatası');
+                        delete window.carFormCallback;
+                        if (script) script.remove();
+                    };
                     
-                    const result = await response.json();
-                    
-                    if (response.ok && result.success) {
-                        showSuccess();
-                        form.reset();
-                    } else {
-                        throw new Error(result.error || result.message || 'Sunucu hatası oluştu');
-                    }
+                    document.head.appendChild(script);
+                    return; // fetch kodunu durdur      
                     
                 } catch (error) {
                     console.error('Form gönderme hatası:', error);
