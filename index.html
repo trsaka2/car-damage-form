@@ -379,14 +379,20 @@
                 };
                 
                 try {
-                    const response = await fetch('https://us-central1-asset-tracker-ca6ff.cloudfunctions.net/addCarData', {
+                    // Firebase Realtime Database'e direkt yazma (CORS yok)
+                    const firebaseUrl = 'https://asset-tracker-ca6ff-default-rtdb.firebaseio.com/car-requests.json';
+                    
+                    const response = await fetch(firebaseUrl, {
                         method: 'POST',
-                        mode: 'cors',
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify(data)
                     });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
                     
                     const result = await response.json();
                     
